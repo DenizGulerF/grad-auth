@@ -1,0 +1,13 @@
+from flask import Blueprint
+
+auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.route("/users/login", methods=["POST"])
+def login():
+    try:
+        data = request.get_json()
+
+        if not data or not data.get("username") or not data.get("password"):
+            return jsonify({"error": "Invalid username or password"}), 400
+        username = data.get("username")
+        password = data.get("password")
