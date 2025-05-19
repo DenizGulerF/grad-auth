@@ -9,7 +9,7 @@ from couchbase.options import (ClusterOptions, ClusterTimeoutOptions, QueryOptio
 from couchbase.exceptions import DocumentNotFoundException, DocumentExistsException
 
 def get_connection():
-    endpoint = "couchbases://cb.sj1-9wzvlo8tmof.cloud.couchbase.com"
+    endpoint = "couchbases://cb.jqqzxiks91vaduqo.cloud.couchbase.com"
     username = "grad-app"
     password = "Grad1234//"
     bucket_name = "Users"
@@ -26,8 +26,9 @@ def get_connection():
 
         # Get default collection 
         collection = bucket.default_collection()
+        username_collection = bucket.collection("Username")
 
-        return cluster, bucket, collection
+        return cluster, bucket, collection, username_collection
     except Exception as e:
         print(f"An error occurred: {e}")
         raise e

@@ -1,0 +1,275 @@
+\templates\index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .form-container {
+            flex: 0 0 48%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .profile-section {
+            margin-top: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            display: none;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Demo</h1>
+    
+    <div class="container">
+        <!-- Login Form -->
+        <div class="form-container">
+            <h2>Login</h2>
+            <div id="login-error" class="error"></div>
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Enter password">
+            </div>
+            <button id="login-btn">Login</button>
+        </div>
+        
+        <!-- Registration Form -->
+        <div class="form-container">
+            <h2>Register</h2>
+            <div id="register-error" class="error"></div>
+            <div id="register-success" class="success"></div>
+            <div class="form-group">
+                <label for="register-username">Username</label>
+                <input type="text" id="register-username" placeholder="Choose username">
+            </div>
+            <div class="form-group">
+                <label for="register-email">Email</label>
+                <input type="email" id="register-email" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Password</label>
+                <input type="password" id="register-password" placeholder="Choose password">
+            </div>
+            <div class="form-group">
+                <label for="register-confirm">Confirm Password</label>
+                <input type="password" id="register-confirm" placeholder="Confirm password">
+            </div>
+            <button id="register-btn">Register</button>
+        </div>
+    </div>
+    
+    <!-- Profile Section (visible after login) -->
+    <div id="profile-section" class="profile-section">
+        <h2>User Profile</h2>
+        <div id="profile-content"></div>
+        <button id="logout-btn">Logout</button>
+    </div>
+    
+    <script>
+        // Store token in localStorage
+        let token = localStorage.getItem('auth_token');
+        
+        // Check if user is already logged in
+        if (token) {
+            fetchProfile();
+        }
+        
+        // Login form submission
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                document.getElementById('login-error').textContent = 'Please enter both username and password.';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+                
+                // Store token
+                localStorage.setItem('auth_token', data.token);
+                token = data.token;
+                
+                // Clear form and error
+                document.getElementById('login-username').value = '';
+                document.getElementById('login-password').value = '';
+                document.getElementById('login-error').textContent = '';
+                
+                // Show profile
+                fetchProfile();
+                
+            } catch (error) {
+                document.getElementById('login-error').textContent = error.message;
+            }
+        });
+        
+        // Registration form submission
+        document.getElementById('register-btn').addEventListener('click', async () => {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            
+            // Clear previous messages
+            document.getElementById('register-error').textContent = '';
+            document.getElementById('register-success').textContent = '';
+            
+            // Validation
+            if (!username || !email || !password) {
+                document.getElementById('register-error').textContent = 'Please fill all required fields.';
+                return;
+            }
+            
+            if (password !== confirm) {
+                document.getElementById('register-error').textContent = 'Passwords do not match.';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Registration failed');
+                }
+                
+                // Store token
+                localStorage.setItem('auth_token', data.token);
+                token = data.token;
+                
+                // Show success message
+                document.getElementById('register-success').textContent = 'Registration successful!';
+                
+                // Clear form
+                document.getElementById('register-username').value = '';
+                document.getElementById('register-email').value = '';
+                document.getElementById('register-password').value = '';
+                document.getElementById('register-confirm').value = '';
+                
+                // Show profile
+                setTimeout(fetchProfile, 1000);
+                
+            } catch (error) {
+                document.getElementById('register-error').textContent = error.message;
+            }
+        });
+        
+        // Fetch and display user profile
+        async function fetchProfile() {
+            try {
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile');
+                }
+                
+                const data = await response.json();
+                
+                // Display profile
+                document.getElementById('profile-content').innerHTML = `
+                    <p><strong>Username:</strong> ${data.user.username}</p>
+                    <p><strong>Email:</strong> ${data.user.email}</p>
+                    <p><strong>ID:</strong> ${data.user.id}</p>
+                    <p><strong>Roles:</strong> ${data.user.roles.join(', ')}</p>
+                `;
+                
+                document.getElementById('profile-section').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Profile error:', error);
+                // If token is invalid, clear it
+                localStorage.removeItem('auth_token');
+                token = null;
+                document.getElementById('profile-section').style.display = 'none';
+            }
+        }
+        
+        // Logout function
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('auth_token');
+            token = null;
+            document.getElementById('profile-section').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
