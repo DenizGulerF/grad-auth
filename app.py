@@ -1,8 +1,12 @@
 from flask import Flask, render_template, current_app
+from flask_cors import CORS  # <-- Add this import
 from couchbaseConfig import get_connection
 import os
 
+
 app = Flask(__name__)
+CORS(app)  # <-- Add this line to enable CORS for all routes
+
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key')
 
@@ -28,4 +32,4 @@ def home():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
